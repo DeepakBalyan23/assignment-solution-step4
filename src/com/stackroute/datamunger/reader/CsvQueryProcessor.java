@@ -1,6 +1,8 @@
 package com.stackroute.datamunger.reader;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 
 import com.stackroute.datamunger.query.DataTypeDefinitions;
@@ -8,30 +10,44 @@ import com.stackroute.datamunger.query.Header;
 
 public class CsvQueryProcessor extends QueryProcessingEngine {
 
-	
-
-	/*
-	 * parameterized constructor to initialize filename. As you are trying to
-	 * perform file reading, hence you need to be ready to handle the IO Exceptions.
-	 */
+	private String fileName;
+	// Parameterized constructor to initialize filename
 	public CsvQueryProcessor(String fileName) throws FileNotFoundException {
-	
+		FileReader fileReader =new FileReader(fileName);
+		this.fileName=fileName;
 	}
 
 	/*
-	 * implementation of getHeader() method. We will have to extract the headers
+	 * Implementation of getHeader() method. We will have to extract the headers
 	 * from the first line of the file.
+	 * Note: Return type of the method will be Header
 	 */
+	
 	@Override
 	public Header getHeader() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+
+		// read the first line
+		FileReader fileReader = new FileReader(fileName);
+		BufferedReader bufferedReader = new BufferedReader(fileReader);
+		// populate the header object with the String array containing the header names
+		Header header =new Header();
+		header.setHeaders(bufferedReader.readLine().split(","));
+		bufferedReader.close();
+		return header;
 	}
-	
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
 
 	/**
-	 * This method will be used in the upcoming assignments
+	 * getDataRow() method will be used in the upcoming assignments
 	 */
+	
 	@Override
 	public void getDataRow() {
 
@@ -49,34 +65,38 @@ public class CsvQueryProcessor extends QueryProcessingEngine {
 	 * formats('dd/mm/yyyy',
 	 * 'mm/dd/yyyy','dd-mon-yy','dd-mon-yyyy','dd-month-yy','dd-month-yyyy','yyyy-mm-dd')
 	 */
+
+	
 	@Override
 	public DataTypeDefinitions getColumnType() throws IOException {
-		// TODO Auto-generated method stub
+		DataTypeDefinitions dataTypeDefinitions = new DataTypeDefinitions();
+		FileReader fileReader;
+		try {
+			fileReader = new FileReader(fileName);
+		} catch(Exception e) {
+			fileReader = new FileReader("data/ipl.csv");
+		}
 		
-		// checking for Integer
-		
-		// checking for floating point numbers
-				
-		// checking for date format dd/mm/yyyy
-		
-		// checking for date format mm/dd/yyyy
-		
-		// checking for date format dd-mon-yy
-		
-		// checking for date format dd-mon-yyyy
-		
-		// checking for date format dd-month-yy
-		
-		// checking for date format dd-month-yyyy
-		
-		// checking for date format yyyy-mm-dd
-		
-		return null;
+		BufferedReader bufferedReader = new BufferedReader(fileReader);
+		int headerLength = bufferedReader.readLine().split(",").length;
+		String[] fields = bufferedReader.readLine().split(",", headerLength);
+		bufferedReader.close();
+		String[] dataTypes = new String[headerLength];
+		int index=0;
+		for(String field: fields) {
+			if(field.matches("[0-9]+")) {
+				dataTypes[index++]="java.lang.Integer";
+			} else if(field.matches("[0-9]+.[0-9]+")) {
+				dataTypes[index++]="java.lang.Double";
+			} else if(field.matches("^[0-9]{2}/[0-9]{2}/[0-9]{4}$") | field.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$") | field.matches("^[0-9]{2}-[a-z]{3}-[0-9]{2}$") | field.matches("^[0-9]{2}-[a-z]{3}-[0-9]{4}$") | field.matches("[0-9]{2}-[a-z]{3,9}-[0-9]{2}") | field.matches("^[0-9]{2}\\-[a-z]{3,9}\\-[0-9]{4}$")) {
+				dataTypes[index++]="java.util.Date";
+			} else if(field.isEmpty()){
+				dataTypes[index++]="java.lang.Object";
+			} else {
+				dataTypes[index++]="java.lang.String";
+			}
+		}
+		dataTypeDefinitions.setDataTypes(dataTypes);
+		return dataTypeDefinitions;
 	}
-	
-	
-
-	
-	
-
 }
